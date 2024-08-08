@@ -100,7 +100,6 @@ class AsyncSession:
 
 		self.url = url
 
-
 	async def __aenter__(self):
 		self.session = aiohttp.ClientSession()
 		response = await self.session.get(self.url)
@@ -110,20 +109,47 @@ class AsyncSession:
 		await self.session.close()
 
 
+class ServerError(Exception):
+	def __init__(self, message):
+		self._message = message
+
+	def __str__(self):
+		return self._message		
+
+
+async def server_returns_error():
+	await asyncio.sleep(3)
+	raise ServerError('Failed to get data')
+
+
 async def check(url):
 	async with AsyncSession(url) as response:
-		
 		html = await response.text()
-
-		print(f'{url}: {html[:20]}')
-
+		return f'{url}: {html[:20]}'
 
 
 async def main():
 
-	await asyncio.create_task(check('http://www.google.com'))
-	await asyncio.create_task(check('http://www.youtube.com'))
-	await asyncio.create_task(check('http://www.udemy.com'))
+	# Running tasks individually
+	# await asyncio.create_task(check('http://www.google.com'))
+	# await asyncio.create_task(check('http://www.youtube.com'))
+	# await asyncio.create_task(check('http://www.udemy.com'))
+
+	# Running task as a group
+	coros = [
+		check('http://www.google.com'),
+		check('http://www.youtube.com'),
+		check('http://www.udemy.com')
+	]
+	# using a context manager and task group
+	results = await asyncio.gather(
+		*coros,
+		server_returns_error(),
+		return_exceptions=True # Allows me to handle exceptions gracefully
+	)
+
+	for res in results:
+		print(res)
 
 
 asyncio.run(main())

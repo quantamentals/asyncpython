@@ -7,6 +7,7 @@ Gather allows us to execute multiples instance of coroutines in one instance
 The even loop with manage the execution of these tasks, scheduling them ans switching
 between them as neccessary
 
+the gather method has the ability to handle exceptions
 
 """
 
