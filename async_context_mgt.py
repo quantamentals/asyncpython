@@ -1,3 +1,5 @@
+import asyncio
+import aiohttp
 
 """
 
@@ -10,7 +12,14 @@ Context managers are possible because of magic methods __enter__() and __exit__(
 
 
 
-"""
+To understand async with is that the methods called from __enter__ and __exit__ are coroutines.h 
+The open and close methods are coroutines on the __enter__ and __exit__
+
+The methods __aenter__ and __aexit__ are implemented for async context managers
+
+
+
+
 
 
 # what is an asyncronous context manager
@@ -41,7 +50,7 @@ class GenericContextManager:
 
 
 	def __enter__(self):
-		"""This method should return the context"""
+		# This method should return the context 
 		return self.obj
 
 
@@ -57,7 +66,7 @@ class WriteToFile:
 
 
 	def __init__(self, filename):
-		self.filename = filename
+		self.filename = filenamett
 
 
 	def __enter__(self):
@@ -79,3 +88,42 @@ def main():
 
 if __name__ == '__main__':
 	main()
+
+"""
+
+
+# creating a async context manager called a session
+
+class AsyncSession:
+
+	def __init__(self, url):
+
+		self.url = url
+
+
+	async def __aenter__(self):
+		self.session = aiohttp.ClientSession()
+		response = await self.session.get(self.url)
+		return response
+
+	async def __aexit__(self, exception_type, exception_value, traceback):
+		await self.session.close()
+
+
+async def check(url):
+	async with AsyncSession(url) as response:
+		
+		html = await response.text()
+
+		print(f'{url}: {html[:20]}')
+
+
+
+async def main():
+
+	await asyncio.create_task(check('http://www.google.com'))
+	await asyncio.create_task(check('http://www.youtube.com'))
+	await asyncio.create_task(check('http://www.udemy.com'))
+
+
+asyncio.run(main())
