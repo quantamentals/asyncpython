@@ -18,14 +18,6 @@ The open and close methods are coroutines on the __enter__ and __exit__
 The methods __aenter__ and __aexit__ are implemented for async context managers
 
 
-
-
-
-
-# what is an asyncronous context manager
-
-
-
 # non context manager way
 try: 
 
@@ -91,6 +83,8 @@ if __name__ == '__main__':
 
 """
 
+
+# what is an asyncronous context manager?
 
 # creating a async context manager called a session
 

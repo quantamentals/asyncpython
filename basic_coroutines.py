@@ -39,6 +39,16 @@ Without putting a coroutine in a task it is not canceable
 The task needs an eventloop to execute
 
 
+In python 3.8 we recieved native coroutines which are more efficient than 
+traditional generator-based coroutines 
+
+These use a dedicated await opcode, resulting in better performance 
+
+The async/await syntax is the same, the implementation is improved
+
+
+
+
 
 # creating coroutines
 

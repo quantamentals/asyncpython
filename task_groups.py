@@ -9,6 +9,16 @@ between them as neccessary
 
 the gather method has the ability to handle exceptions
 
+
+
+The gather method is used to await multiple coroutines concurrently.
+
+The event loop manages the execution of these coroutines, ensuring they run
+concurrently.
+
+
+
+ 
 """
 
 async def task():
