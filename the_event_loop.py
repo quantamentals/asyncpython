@@ -84,6 +84,37 @@ If you are not on the main thread and no running
 loop is instantiated by other means, it will raise a
 RuntimeError
 
+
+AbstractEventLoop and BaseEventLoop represent 
+two potential classes for an event loop implementation.
+
+
+The AbstractEventLoop class defines the interface of an event loop in the
+asyncio ecosystem. The interface methods can be roughly split into the
+following sections:
+	•Lifecycle methods (running, stopping, querying the
+	state of, and closing the loop)
+	•Scheduling methods
+	•Callbacks
+	•Coroutines
+	•Future creation
+	•Thread-related methods
+	•I/O-related methods
+	•Low-level APIs (socket, pipe, and reader/writer APIs)
+	•High-level APIs (server, pipe, and subprocess-related
+	methods)
+	•Signal methods
+	•Debug flag management methods
+The API is stable and can be subclassed in the case of a manual event
+loop implementation
+
+Despite being more high-level component based, the BaseEventLoop class
+should not be used to create a manual loop implementation because its
+API is not stable
+
+
+Event loops are OS specific. This may affect API availability and the
+speed of the event loop.
 --
 
 asyncio.get_running_loop works differently. It will always return the
