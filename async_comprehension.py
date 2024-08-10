@@ -4,6 +4,9 @@ import asyncio
 Async comprehensions allow us to create lists, dictionaries or set
 using asynchronous operation
 
+Async comprehensions provide a concise way to create collections using
+asynchronous operations
+
 """
 
 
@@ -11,8 +14,6 @@ async def my_coro(number):
 
 	await asyncio.sleep(1)
 	return number ** 2
-
-
 
 
 async def main():
