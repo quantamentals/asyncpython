@@ -1,6 +1,8 @@
 import asyncio
 from threading import Thread
+import threading
 import sys
+import os
 
 """
 An event is a message that is emitted in a certain condition by one part of
@@ -105,6 +107,8 @@ following sections:
 	methods)
 	•Signal methods
 	•Debug flag management methods
+
+	 
 The API is stable and can be subclassed in the case of a manual event
 loop implementation
 
@@ -127,6 +131,18 @@ Since loops in asyncio are tightly coupled with the concept of loop
 policies, it not advisable to create the loop instances via the loop
 constructor
 
+
+
+
+Loops live in the context of a loop policy. The DefaultLoopPolicy scopes
+the loop per thread and does not allow creation of a loop outside a main
+thread via asyncio.get_event_loop. Hence, we must create a thread local
+event loop via asyncio.set_event_loop(asyncio.new_event_loop()).
+We then await the asyncio.run_until_complete completion inside
+our internal worker function called _worker by waiting for the thread to be
+joined via join_threads
+
+	
 
 # To create a new event loop instance, we will use the asyncio.new_event_loop
 
@@ -207,16 +223,15 @@ thread = LoopShowerThread()
 thread.start()
 thread.join()
 
-"""
+
 
 
 
 ######################################
 # Attaching an event loop to a thread
-######################################
-
-
+######################################	
 def create_event_loop_thread(worker, *args, **kwargs):
+
 
 	def _worker(*args, **kwargs):
 
@@ -232,4 +247,66 @@ def create_event_loop_thread(worker, *args, **kwargs):
 
 
 
+async def print_coro(*args, **kwargs):
+	print(f'Inside the print coro on {threading.get_ident()}:',(args, kwargs))
 
+def start_threads(*threads):
+	[t.start() for t in threads if isinstance(t, threading.Thread)]
+
+def join_threads(*threads):
+	[t.join() for t in threads if isinstance(t, threading.Thread)]
+
+
+def main():
+	workers = [create_event_loop_thread(print_coro) for i in range(10)]
+	start_threads(*workers)
+	join_threads(*workers)
+
+
+if __name__ == '__main__':
+	main()
+
+
+# process local event loops in a primary-secondary setup
+# with event loops running in all processes
+
+
+pid_loops = {}
+
+
+def get_event_loops():
+	return pid_loops[os.getpid()]
+
+def asyncio_init():
+
+	pid = os.getpid()
+
+	if pid not in pid_loops:
+
+		pid_loops[pid] = asyncio.new_event_loop()
+		pid_loops[pid].pid = pid
+
+
+if __name__ == '__main__':
+
+	# The shown solution provides a way to have one event loop per process on
+ 	# a unix system and cache it inside the pid_loops dict
+
+	os.register_at_fork(after_in_parent=asyncio_init, after_in_child=asyncio_initn)
+
+	if os.fork() == 0:
+		# Child
+		loop = get_event_loop()
+		pid = os.getpid()
+		assert pid == loop.pid
+		print(pid)
+	else:
+		# Parent
+		loop = get_event_loop()
+		pid = os.getpid()
+		assert pid == loop.pid
+		print(pid)
+
+
+
+"""
