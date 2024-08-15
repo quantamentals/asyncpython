@@ -161,8 +161,9 @@ if __name__ == "__main__":
 
 		coroutine = my_corountine()
 		future = asyncio.ensure_future(coroutine)
-		future.add_done_callback(callback)
-		loop.run_until_complete(future)
+		future.add_done_callback(callback) # i could run something like this to execute order SSE check
+		loop.run_until_complete(future) 
 
 	finally:
 		loop.close()
+

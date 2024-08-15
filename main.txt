@@ -1,0 +1,82 @@
+
+
+
+The main async io concepts:
+
+	- Everything async runs on an eventloop
+	- An eventloop allows single threaded processes to do more
+	- This can significantly speed up the work of IO "bound" tasks
+	- I can run event loop, no control, with asyncio.run
+	- I can control the event loop to varying levels
+	- The simplest way to control event loop is asyncio.new_event_loop and wth run_until_complete
+	- I can execute an async function called a coroutine on an eventloop
+	- I can execute a collection of coroutines can be executed as
+	once with asynco.gather
+	- We can manage excution of a coroutine with the await keyword.
+	- The await key works gives control from the coroutine to the eventloop
+	- This does not happen automatically only if the await has return value or else 
+
+
+
+
+
+#####################
+
+
+Right
+When a coroutine awaits another coroutine or a Future object, it gives control back to the event loop. However, if the awaited coroutine or Future object returns a value, that value is passed to the awaiting coroutine, and execution resumes without giving control back to the event loop.
+In other words, if the await expression returns a value, the coroutine continues executing with that value, without yielding control to the event loop.
+Here's an example:
+Python
+
+async def main():
+    result = await my_coroutine()  # Gives control to the event loop
+    print(result)  # Continues executing without giving control back
+
+async def my_coroutine():
+    return "Hello, World!"
+
+asyncio.run(main())
+
+In this case, my_coroutine returns a value ("Hello, World!"), which is passed to main. The main coroutine then continues executing, printing the result, without giving control back to the event loop.
+However, if the awaited coroutine or Future object doesn't return a value (i.e., it returns None), the event loop will regain control, allowing other coroutines to run.
+So, to summarize:
+
+    await gives control to the event loop, allowing other coroutines to run.
+    If the awaited coroutine or Future object returns a value, execution resumes without giving control back to the event loop.
+    If the awaited coroutine or Future object returns None, the event loop regains control.
+
+
+
+As soon as you await a coroutine, it immediately gives control back to the event loop. The event loop then takes over, running other coroutines that are ready to run, or waiting for I/O operations to complete.
+The awaited coroutine is essentially paused, and its execution is suspended until the event loop decides to resume it. This allows other coroutines to run in the meantime, making efficient use of resources.
+So, to clarify:
+
+    await is a synchronous operation that immediately gives control back to the event loop.
+    The event loop then manages the execution of coroutines, resuming the awaited coroutine when its dependencies are met (e.g., I/O operations complete).
+
+Here's a simple example to illustrate this:
+Python
+
+import asyncio
+
+async def main():
+    print("Main start")
+    await my_coroutine()  # Gives control back to the event loop
+    print("Main finish")
+
+async def my_coroutine():
+    print("My coroutine start")
+    await asyncio.sleep(1)  # Gives control back to the event loop
+    print("My coroutine finish")
+
+asyncio.run(main())
+
+Output:
+
+Main start
+My coroutine start
+My coroutine finish
+Main finish
+
+As you can see, main gives control back to the event loop as soon as it awaits my_coroutine. The event loop then runs my_coroutine, which gives control back to the event loop again when it awaits asyncio.sleep(1). Finally, the event loop resumes my_coroutine and then main.
