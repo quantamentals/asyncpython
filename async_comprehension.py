@@ -1,5 +1,9 @@
 import asyncio
 
+from faker import Faker
+
+import redis
+
 """
 Async comprehensions allow us to create lists, dictionaries or set
 using asynchronous operation
@@ -26,5 +30,30 @@ async def main():
 
 
 
+
+faker = Faker('en_US')
+
+# creating coroutines from async generators
+async def get_user(n=1):
+	for i in range(n):
+		await asyncio.sleep(0.1)
+		name, surname = faker.name_male().split()
+		yield name, surname
+
+
+async def main():
+    from redis_om import get_redis_connection
+
+    redis_conn = get_redis_connection()
+
+    users_list = [name async for name in get_user(3)]
+    print(users_list)
+
+    user_dict = {name: surname async for name, surname in get_user(3)}
+    print(user_dict)
+
+    [redis_conn.set(key, value) for key, value in user_dict.items()]
+
+
 if __name__ == '__main__':
-	asyncio.run(main())
+    asyncio.run(main())

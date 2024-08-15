@@ -17,7 +17,7 @@ The event loop manages the execution of these coroutines, ensuring they run
 concurrently.
 
 
-
+in 
  
 """
 
@@ -31,27 +31,16 @@ async def main():
 	await asyncio.gather(task(),task(),task())
 
 
-if __name__ == '__main__':
-	asyncio.run(main())
-
-
-
 
 # another gather implementation
 async def task(name, delay):
-
 	print(f"Task {name} starting with delay of {delay}")
-
 	await asyncio.sleep(delay)
-
 	print(f"Task {name} finished")
-
-
 	return f"Task {name} result"
 
 
 async def main():
-
 	tasks = [
 		task("A",1),
 		task("B",2),

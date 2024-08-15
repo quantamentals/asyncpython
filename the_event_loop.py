@@ -224,9 +224,6 @@ thread.start()
 thread.join()
 
 
-
-
-
 ######################################
 # Attaching an event loop to a thread
 ######################################	
