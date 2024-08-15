@@ -30,10 +30,10 @@ async def main():
 
 
 
+# creating coroutines from async generators
 
 faker = Faker('en_US')
 
-# creating coroutines from async generators
 async def get_user(n=1):
 	for i in range(n):
 		await asyncio.sleep(0.1)
@@ -51,6 +51,9 @@ async def main():
 
     user_dict = {name: surname async for name, surname in get_user(3)}
     print(user_dict)
+
+    users_set = {name async for name in get_user(3)}
+    print(users_set)
 
     [redis_conn.set(key, value) for key, value in user_dict.items()]
 

@@ -307,3 +307,27 @@ if __name__ == '__main__':
 
 
 """
+
+
+
+# The most basic control of the event loop
+import asyncio 
+
+
+async def my_corountine():
+	print("Coroutine started")
+
+	await asyncio.sleep(1)
+
+	print("Coroutine completed")
+
+
+if __name__ == "__main__":
+
+	loop = asyncio.new_event_loop()
+	try:
+
+		loop.run_until_complete(my_corountine())
+	
+	finally:
+		loop.close()
