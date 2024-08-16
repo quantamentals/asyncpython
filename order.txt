@@ -1,0 +1,575 @@
+import asyncio
+import time
+import heapq
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class OrderProcessor:
+    def __init__(self, broker_api):
+        self.broker_api = broker_api
+        self.scheduler = SimpleTaskScheduler()
+        self.orders = {}
+
+    def validate_order(self, order):
+        # Validate order parameters (e.g., symbol, quantity, type)
+        # Return True if valid, False otherwise
+        pass
+
+    def execute_order(self, order):
+        # Route order to broker API
+        self.broker_api.place_order(order)
+        # Start order monitoring process
+        self.scheduler.add_task(self.monitor_order, 0, order)
+
+    def monitor_order(self, order):
+        # Listen for SSEs to handle order fills and update order objects
+        # Use a loop to continuously monitor the order
+        while True:
+            try:
+                # Check for order updates (e.g., fills, cancellations)
+                update = self.broker_api.get_order_update(order)
+                if update:
+                    # Update order object
+                    self.orders[order.id] = update
+                    # Log update
+                    logger.info(f"Order {order.id} updated: {update}")
+            except Exception as e:
+                logger.error(f"Error monitoring order {order.id}: {e}")
+            # Sleep for a short duration before checking again
+            await asyncio.sleep(1)
+
+    def process_order(self, order):
+        # Validate order
+        if self.validate_order(order):
+            # Execute order
+            self.execute_order(order)
+        else:
+            logger.error(f"Invalid order: {order}")
+
+    async def run(self):
+        # Run scheduler
+        await self.scheduler.run()
+
+
+class BrokerAPI:
+    def place_order(self, order):
+        # Implement API call to place order
+        pass
+
+    def get_order_update(self, order):
+        # Implement API call to get order updates
+        pass
+
+
+async def main():
+    broker_api = BrokerAPI()
+    order_processor = OrderProcessor(broker_api)
+
+    # Example order
+    order = {
+        "id": 1,
+        "symbol": "AAPL",
+        "quantity": 100,
+        "type": "market"
+    }
+
+    # Process order
+    order_processor.process_order(order)
+
+    # Run order processor
+    await order_processor.run()
+
+
+asyncio.run(main())
+
+
+###############
+
+
+Yes, it's possible to design the OrderProcessor and SimpleTaskScheduler to run as background processes that continuously detect and process order signals from Redis. Here's an updated example:
+Python
+
+import asyncio
+import aioredis
+
+class OrderProcessor:
+    def __init__(self, broker_api, redis_url):
+        self.broker_api = broker_api
+        self.redis = aioredis.from_url(redis_url)
+        self.task_scheduler = SimpleTaskScheduler()
+
+    async def run(self):
+        # Subscribe to order signals from Redis
+        async with self.redis.subscribe('order_signals') as channel:
+            async for message in channel:
+                # Process order signal
+                order = message.decode('utf-8')
+                await self.process_order(order)
+
+    async def process_order(self, order):
+        # Validate order
+        if await self.validate_order(order):
+            # Execute order
+            await self.execute_order(order)
+        else:
+            logger.error(f"Invalid order: {order}")
+
+    async def validate_order(self, order):
+        # Validate order parameters (e.g., symbol, quantity, type)
+        # Return True if valid, False otherwise
+        pass
+
+    async def execute_order(self, order):
+        # Route order to broker API
+        self.broker_api.place_order(order)
+        # Start order monitoring process
+        self.task_scheduler.add_task(self.monitor_order, 0, order)
+
+    async def monitor_order(self, order):
+        # Listen for SSEs to handle order fills and update order objects
+        # Use a loop to continuously monitor the order
+        while True:
+            try:
+                # Check for order updates (e.g., fills, cancellations)
+                update = self.broker_api.get_order_update(order)
+                if update:
+                    # Update order object
+                    # Broadcast update to subscribers
+                    await self.broadcast_update(order, update)
+                    # Log update
+                    logger.info(f"Order {order} updated: {update}")
+            except Exception as e:
+                logger.error(f"Error monitoring order {order}: {e}")
+            # Sleep for a short duration before checking again
+            await asyncio.sleep(1)
+
+    async def broadcast_update(self, order, update):
+        # Broadcast update to subscribers via Redis
+        await self.redis.publish(f"order:{order}", update)
+
+
+async def main():
+    broker_api = BrokerAPI()
+    redis_url = "redis://localhost"
+    order_processor = OrderProcessor(broker_api, redis_url)
+
+    # Run order processor as background process
+    asyncio.create_task(order_processor.run())
+
+    # Keep the event loop running
+    await asyncio.sleep_forever()
+
+
+asyncio.run(main())
+
+In this example, the OrderProcessor runs as a background process that continuously detects and processes order signals from Redis. The SimpleTaskScheduler is used to schedule tasks for order monitoring and execution.
+Note that you'll need to implement the validate_order, execute_order, and monitor_order methods according to your specific trading system requirements. Additionally, you'll need to integrate the BrokerAPI class with your actual broker API.
+
+
+#############
+
+Here are some ways to embed the OrderProcessor in FastAPI:
+
+    Run as a background task: Use FastAPI's BackgroundTasks to run the OrderProcessor as a background task.
+
+Python
+
+from fastapi import FastAPI, BackgroundTasks
+
+app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    order_processor = OrderProcessor(broker_api, redis_url)
+    background_tasks.add_task(order_processor.run)
+
+    Use a separate worker process: Run the OrderProcessor in a separate worker process using a library like uvicorn or gunicorn.
+
+Bash
+
+uvicorn main:app --workers 2
+
+    Integrate with FastAPI's event loop: Use FastAPI's event loop to run the OrderProcessor.
+
+Python
+
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    order_processor = OrderProcessor(broker_api, redis_url)
+    await order_processor.run
+
+    Create a separate API endpoint: Create a separate API endpoint to start/stop the OrderProcessor.
+
+Python
+
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.post("/start-order-processor")
+async def start_order_processor():
+    order_processor = OrderProcessor(broker_api, redis_url)
+    await order_processor.run
+
+@app.post("/stop-order-processor")
+async def stop_order_processor():
+    order_processor.stop()
+
+    Use a message broker: Use a message broker like RabbitMQ or Apache Kafka to communicate between the OrderProcessor and FastAPI.
+
+Python
+
+from fastapi import FastAPI
+from rabbitmq import RabbitMQ
+
+app = FastAPI()
+rabbitmq = RabbitMQ()
+
+@app.post("/process-order")
+async def process_order(order: Order):
+    rabbitmq.publish("order_processor", order)
+
+These are just a few examples of how you can embed the OrderProcessor in FastAPI. The best approach depends on your specific use case and requirements.
+
+
+####
+
+
+Perfekt! Using RedisOM (Redis Object Mapping) is another great way to integrate the OrderProcessor with FastAPI. RedisOM provides a simple and intuitive way to interact with Redis, making it easy to store and retrieve data.
+Here's an example of how you can use RedisOM to store and retrieve orders:
+Python
+
+from fastapi import FastAPI
+from redisom import RedisOM
+
+app = FastAPI()
+redisom = RedisOM(host='localhost', port=6379, db=0)
+
+class Order(redisom.Model):
+    symbol: str
+    quantity: int
+    type: str
+
+@app.post("/process-order")
+async def process_order(order: Order):
+    # Store order in Redis
+    await order.save()
+
+    # Process order
+    order_processor = OrderProcessor(broker_api, redis_url)
+    await order_processor.run()
+
+    # Retrieve order from Redis
+    order = await Order.get(order.id)
+    return order
+
+In this example, we define an Order model using RedisOM, which allows us to store and retrieve orders in Redis. We then use the OrderProcessor to process the order, and finally retrieve the updated order from Redis using RedisOM.
+Using RedisOM provides several benefits, including:
+
+    Easy data modeling and storage
+    Fast data retrieval and updates
+    Support for transactions and pub/sub messaging
+
+Overall, using RedisOM is a great way to integrate the OrderProcessor with FastAPI, and provides a scalable and efficient way to handle orders.
+
+#
+
+Based on your preferences, here's a suggested architecture and class definitions for an order management system:
+Architecture Diagram:
+
+                                      +---------------+
+                                      |  FastAPI API  |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  OrderService  |
+                                      |  (AsyncIO,     |
+                                      |   FastAPI)     |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  OrderRepository|
+                                      |  (RedisOM,     |
+                                      |   Async Redis)  |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  OrderProcessor |
+                                      |  (AsyncIO)      |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  BrokerAPI    |
+                                      |  (AsyncIO)      |
+                                      +---------------+
+
+Class Definitions:
+Python
+
+# order_service.py
+from fastapi import FastAPI, BackgroundTasks
+from order_repository import OrderRepository
+from order_processor import OrderProcessor
+
+app = FastAPI()
+
+order_repository = OrderRepository()
+order_processor = OrderProcessor()
+
+@app.post("/orders")
+async def create_order(order: Order):
+    await order_repository.save(order)
+    background_tasks.add_task(order_processor.process_order, order)
+
+# order_repository.py
+from redisom import RedisOM
+from async_redis import AsyncRedis
+
+class OrderRepository:
+    def __init__(self):
+        self.redisom = RedisOM(host='localhost', port=6379, db=0)
+        self.async_redis = AsyncRedis(host='localhost', port=6379, db=0)
+
+    async def save(self, order: Order):
+        await self.redisom.save(order)
+
+    async def get(self, order_id: int):
+        return await self.redisom.get(Order, order_id)
+
+# order_processor.py
+from broker_api import BrokerAPI
+
+class OrderProcessor:
+    def __init__(self):
+        self.broker_api = BrokerAPI()
+
+    async def process_order(self, order: Order):
+        # Execute order
+        await self.broker_api.execute_order(order)
+        # Monitor order
+        await self.monitor_order(order)
+
+    async def monitor_order(self, order: Order):
+        # Update order status
+        await order_repository.update(order)
+        # Broadcast order update
+        await order_repository.broadcast_update(order)
+
+# broker_api.py
+from async_redis import AsyncRedis
+
+class BrokerAPI:
+    def __init__(self):
+        self.async_redis = AsyncRedis(host='localhost', port=6379, db=0)
+
+    async def execute_order(self, order: Order):
+        # Implement broker API call to execute order
+        pass
+
+    async def get_order_update(self, order: Order):
+        # Implement broker API call to get order update
+        pass
+
+This design uses:
+
+    FastAPI for the API layer
+    RedisOM for storing and retrieving orders
+    Async Redis for asynchronous Redis operations
+    AsyncIO for asynchronous order processing and monitoring
+    SQLite3 is not used in this example, but you can replace RedisOM with an SQLite3-based repository if needed
+
+Note that this is just one possible way to design the system, and you may need to modify it based on your specific requirements.
+
+
+Here's an updated design:
+Order Service
+Python
+
+# order_service.py
+from fastapi import FastAPI, BackgroundTasks
+from order_repository import OrderRepository
+from order_processor import OrderProcessor
+
+class OrderService:
+    def __init__(self, order_repository: OrderRepository, order_processor: OrderProcessor):
+        self.order_repository = order_repository
+        self.order_processor = order_processor
+
+    async def create_order(self, order: Order):
+        await self.order_repository.save(order)
+        background_tasks.add_task(self.order_processor.process_order, order)
+
+    async def get_order(self, order_id: int):
+        return await self.order_repository.get(order_id)
+
+    async def update_order(self, order: Order):
+        await self.order_repository.update(order)
+
+    async def delete_order(self, order_id: int):
+        await self.order_repository.delete(order_id)
+
+Order Repository
+Python
+
+# order_repository.py
+from redisom import RedisOM
+from async_redis import AsyncRedis
+
+class OrderRepository:
+    def __init__(self):
+        self.redisom = RedisOM(host='localhost', port=6379, db=0)
+        self.async_redis = AsyncRedis(host='localhost', port=6379, db=0)
+
+    async def save(self, order: Order):
+        await self.redisom.save(order)
+
+    async def get(self, order_id: int):
+        return await self.redisom.get(Order, order_id)
+
+    async def update(self, order: Order):
+        await self.redisom.update(order)
+
+    async def delete(self, order_id: int):
+        await self.redisom.delete(Order, order_id)
+
+Order Processor
+Python
+
+# order_processor.py
+from broker_api import BrokerAPI
+
+class OrderProcessor:
+    def __init__(self, broker_api: BrokerAPI):
+        self.broker_api = broker_api
+
+    async def process_order(self, order: Order):
+        # Execute order
+        await self.broker_api.execute_order(order)
+        # Monitor order
+        await self.monitor_order(order)
+
+    async def monitor_order(self, order: Order):
+        # Update order status
+        await order_repository.update(order)
+        # Broadcast order update
+        await order_repository.broadcast_update(order)
+
+In this design, the OrderService is composed of an OrderRepository and an OrderProcessor. The OrderRepository handles storage and retrieval of orders, while the OrderProcessor handles execution and monitoring of orders. The OrderService provides a high-level interface for creating, getting, updating, and deleting orders.
+This design allows for loose coupling between the components and makes it easier to test and maintain each component individually.
+
+
+
+Here is the updated OrderProcessor class with the SimpleTaskScheduler:
+Python
+
+# order_processor.py
+from broker_api import BrokerAPI
+from simple_task_scheduler import SimpleTaskScheduler
+
+class OrderProcessor:
+    def __init__(self, broker_api: BrokerAPI):
+        self.broker_api = broker_api
+        self.task_scheduler = SimpleTaskScheduler()
+
+    async def process_order(self, order: Order):
+        # Execute order
+        await self.broker_api.execute_order(order)
+        # Schedule order monitoring
+        self.task_scheduler.add_task(self.monitor_order, 0, order)
+
+    async def monitor_order(self, order: Order):
+        # Monitor order status
+        update = await self.broker_api.get_order_update(order)
+        if update:
+            # Update order status
+            await order_repository.update(order)
+            # Broadcast order update
+            await order_repository.broadcast_update(order)
+        # Reschedule monitoring task
+        self.task_scheduler.add_task(self.monitor_order, 1, order)
+
+In this updated design, the OrderProcessor uses the SimpleTaskScheduler to schedule the monitor_order task to run at regular intervals (every 1 second in this example). This allows the OrderProcessor to continuously monitor the order status without blocking the main thread.
+Note that I also removed the order_repository dependency from the OrderProcessor class, as it's not needed anymore. Instead, the OrderProcessor relies on the SimpleTaskScheduler to schedule the monitoring task.
+
+
+Here's a high-level flowchart of the data flow from order execution to order being processed:
+
+                                      +---------------+
+                                      |  Order Execution  |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  Broker API    |
+                                      |  (Execute Order) |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  Order Repository |
+                                      |  (Save Order)    |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  Order Processor  |
+                                      |  (Process Order) |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  Simple Task Scheduler |
+                                      |  (Schedule Monitoring) |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  Order Monitoring  |
+                                      |  (Get Order Update) |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  Order Repository |
+                                      |  (Update Order)   |
+                                      +---------------+
+                                             |
+                                             |
+                                             v
+                                      +---------------+
+                                      |  Order Broadcast  |
+                                      |  (Broadcast Update) |
+                                      +---------------+
+
+This flowchart shows the following steps:
+
+    Order execution: The order is executed through the broker API.
+    Save order: The order is saved to the order repository.
+    Process order: The order processor processes the order.
+    Schedule monitoring: The simple task scheduler schedules the order monitoring task.
+    Order monitoring: The order monitoring task gets the order update from the broker API.
+    Update order: The order repository updates the order status.
+    Broadcast update: The order broadcast sends the updated order status to subscribers.
+
+Note that this is a high-level flowchart and may not include all the details of the actual implementation.
