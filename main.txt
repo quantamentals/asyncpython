@@ -80,3 +80,29 @@ My coroutine finish
 Main finish
 
 As you can see, main gives control back to the event loop as soon as it awaits my_coroutine. The event loop then runs my_coroutine, which gives control back to the event loop again when it awaits asyncio.sleep(1). Finally, the event loop resumes my_coroutine and then main.
+
+
+
+
+#####################################################
+
+Asyncio supports a variety of protocols, including:
+
+    TCP: Asyncio provides support for TCP servers and clients through the create_server and open_connection functions.
+    UDP: Asyncio supports UDP servers and clients through the create_datagram_endpoint function.
+    SSL/TLS: Asyncio provides support for SSL/TLS encryption through the ssl module.
+    HTTP: Asyncio has built-in support for HTTP servers and clients through the http module.
+    WebSockets: Asyncio supports WebSockets through the websockets module.
+    Subprocesses: Asyncio allows you to run subprocesses asynchronously through the create_subprocess_exec function.
+    Sockets: Asyncio provides a low-level socket interface through the socket module.
+    ** pipes**: Asyncio supports pipes through the create_pipe_connection function.
+
+Additionally, asyncio has support for various network protocols through third-party libraries, such as:
+
+    MQTT: Asyncio supports MQTT through libraries like aiomqtt and asyncio-mqtt.
+    AMQP: Asyncio supports AMQP through libraries like aioamqp and asyncio-amqp.
+    Redis: Asyncio supports Redis through libraries like aioredis and asyncio-redis.
+    MongoDB: Asyncio supports MongoDB through libraries like aiomongo and asyncio-mongo.
+    PostgreSQL: Asyncio supports PostgreSQL through libraries like aiopg and asyncio-pg.
+
+These libraries provide asyncio-compatible interfaces to these protocols, allowing you to use them in your asynchronous applications.s
