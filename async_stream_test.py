@@ -61,13 +61,17 @@ async def my_coroutine(value):
     await asyncio.sleep(1)
     return value
 
+# @pytest.mark.asyncio
+# async def test_my_coroutine(my_fixture):
+#     async for fixture_value in my_fixture:
+#         result = await my_coroutine(fixture_value)
+#         assert result == 42
+
 @pytest.mark.asyncio
 async def test_my_coroutine(my_fixture):
-    async for fixture_value in my_fixture:
-        result = await my_coroutine(fixture_value)
-        assert result == 42
-
-
+    fixture_value = await my_fixture.__anext__()
+    result = await my_coroutine(fixture_value)
+    assert result == 42
 
 async def fetch_data():
 	await asyncio.sleep(1)
