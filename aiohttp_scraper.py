@@ -1,6 +1,9 @@
+import logging
 import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
+
+from aiohttp import ClientError
 
 # basic web scrape
 async def fetch(url):
@@ -63,5 +66,38 @@ async def main():
 
 		await parse(html)
 
-if __name__ == '__main__':
-	asyncio.run(main())
+# error handling and retrying
+
+logging.basicConfig(level=logging.INFO)
+
+async def fetch_with_retry(session, url, max_retries=3):
+    retries = 0
+    delay = 1  # initial delay
+    while retries < max_retries:
+
+        try:
+
+        	async with session.get(url) as response:
+        		if response.status == 200:
+        			print('running 200')
+        			return await response.text()
+        except aiohttp.ClientError as e:
+            logging.error(f"Error fetching {url}: {e}")
+            retries += 1
+            await asyncio.sleep(delay)
+            delay *= 2  # exponential backoff
+    else:
+        raise Exception(f"Failed to fetch {url} after {max_retries} retries")
+
+async def main():
+    url = "https://example.com/Invalid"
+
+    async with aiohttp.ClientSession() as session:
+        html = await fetch_with_retry(session, url)
+
+        if html: 
+            print("Successfully fetched the web page")
+        else:
+            print("Failed to fetch the webpage after multiple retries")
+
+asyncio.run(main())
