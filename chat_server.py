@@ -6,16 +6,12 @@ class ChatServer:
 	def __init__(self):
 		self.clients = []
 
-
 	async def handle_client(self, reader, writer):
-
 		self.clients.append(writer)
-
 		addr = writer.get_extra_info('peername')
 		print(f"New connection from {addr}")
 
 		while True:
-
 			data = await reader.read(100)
 			if not data: 
 				print(f"Connection closed by {addr}")
@@ -31,17 +27,13 @@ class ChatServer:
 					await client.drain()
 
 
-
-
 	async def run_server(self, host, port):
 		server = await asyncio.start_server(self.handle_client, host, port)
 		addr = server.sockets[0].getsockname()
 		print(f"Serving on {addr}")
 
-
 		async with server:
 			await server.serve_forever()
-
 
 
 if __name__ == '__main__':

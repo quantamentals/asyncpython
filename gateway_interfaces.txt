@@ -1,0 +1,29 @@
+
+
+Specifications are used by third party developers to implement solutions into a web framework for example
+
+
+Web Server Gateway Interface (WSGI)
+
+WSGI apps are single,synchronous callable that takes in a request and returns a response
+
+
+Callable is anything that can be called __call__ in python
+
+
+WGSI is then a python specification for a how a server handles a request. This now provides a universal interface between python apps and web servers
+
+
+WSGI specifies:
+
+- Must be a callable with request and create_resp_fn parameters
+- Must call the create_resp_fn callback before sending the body
+- Must return an iterable with pieces / chunks of the document body
+
+Calling the create_resp_fn creates status codes and headers
+
+A bare bones flask server implements the WSGI protocol
+
+def app (request: dict, create_resp_fn):
+	create_resp_fn('200 OK', [('Content-Type','text/plain')])
+	return ["Hello World!\n"]
