@@ -27,3 +27,23 @@ A bare bones flask server implements the WSGI protocol
 def app (request: dict, create_resp_fn):
 	create_resp_fn('200 OK', [('Content-Type','text/plain')])
 	return ["Hello World!\n"]
+
+
+
+
+Asynchronous Server Gateway Interface (ASGI)
+
+
+A spiritual successor to WSGI, intended to provide a standard interface between async-capable python web servers, frameworks and applications
+
+When defining an ASGI server, it is an asynchronous callable that takes in 3 arguments:
+
+	- scope: a dict containing details about the incoming connection
+	- send: an asynchronous callable that lets the application send 		event messages to the client
+	- recieve: an asynchronous callable which lets the application 				recieve event messages from the client
+
+
+ASGI enables websockets which allow for 2 way communication where a server can initiate communication
+
+the server can keep track of each client and push messages to a subset of clients
+
