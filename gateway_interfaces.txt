@@ -40,7 +40,7 @@ When defining an ASGI server, it is an asynchronous callable that takes in 3 arg
 
 	- scope: a dict containing details about the incoming connection
 	- send: an asynchronous callable that lets the application send 		event messages to the client
-	- recieve: an asynchronous callable which lets the application 				recieve event messages from the client
+	- receive: an asynchronous callable which lets the application 				recieve event messages from the client
 
 
 ASGI enables websockets which allow for 2 way communication where a server can initiate communication

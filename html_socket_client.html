@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+</head>
+<body>
+	<h1>Hello World</h1>
+	<script type="text/javascript">
+		var ws = new WebSocket('ws://127.0.0.1:5005/')
+
+		var messages = document.createElement('ul');
+		document.body.appendChild(messages);
+
+		ws.onmessage = function(event){
+			var message = document.createElement('li');
+			var content = document.createTextNode(event.data);
+
+			message.appendChild(content);
+			messages.appendChild(message);
+		}
+	</script>
+
+</body>
+</html>
